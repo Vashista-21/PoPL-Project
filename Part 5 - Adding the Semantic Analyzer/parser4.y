@@ -35,7 +35,7 @@
 	int label=0;
 	char buff[100];
 	char errors[10][100];
-	char reserved[10][10] = {"int", "float", "char", "void", "if", "else", "for", "main", "return", "include"};
+	char reserved[10][10] = {"num", "deci", "char", "nully", "check", "otherwise", "trav", "vsa", "handover", "include"};
 
 	struct node { 
 		struct node *left; 
@@ -88,12 +88,12 @@ body: FOR { add('K'); } '(' statement ';' condition ';' statement ')' '{' body '
 }
 | IF { add('K'); } '(' condition ')' '{' body '}' else { 
 	struct node *iff = mknode($4.nd, $7.nd, $1.name); 
-	$$.nd = mknode(iff, $9.nd, "if-else"); 
+	$$.nd = mknode(iff, $9.nd, "check-otherwise"); 
 }
 | statement ';' { $$.nd = $1.nd; }
 | body body { $$.nd = mknode($1.nd, $2.nd, "statements"); }
-| PRINTFF { add('K'); } '(' STR ')' ';' { $$.nd = mknode(NULL, NULL, "printf"); }
-| SCANFF { add('K'); } '(' STR ',' '&' ID ')' ';' { $$.nd = mknode(NULL, NULL, "scanf"); }
+| PRINTFF { add('K'); } '(' STR ')' ';' { $$.nd = mknode(NULL, NULL, "show"); }
+| SCANFF { add('K'); } '(' STR ',' '&' ID ')' ';' { $$.nd = mknode(NULL, NULL, "grab"); }
 ;
 
 else: ELSE { add('K'); } '{' body '}' { $$.nd = mknode(NULL, $4.nd, $1.name); }
@@ -111,27 +111,27 @@ statement: datatype ID { add('V'); } init {
 	int t = check_types($1.name, $4.type); 
 	if(t>0) { 
 		if(t == 1) {
-			struct node *temp = mknode(NULL, $4.nd, "floattoint"); 
+			struct node *temp = mknode(NULL, $4.nd, "deci_to_num"); 
 			$$.nd = mknode($2.nd, temp, "declaration"); 
 		} 
 		else if(t == 2) { 
-			struct node *temp = mknode(NULL, $4.nd, "inttofloat"); 
+			struct node *temp = mknode(NULL, $4.nd, "num_to_deci"); 
 			$$.nd = mknode($2.nd, temp, "declaration"); 
 		} 
 		else if(t == 3) { 
-			struct node *temp = mknode(NULL, $4.nd, "chartoint"); 
+			struct node *temp = mknode(NULL, $4.nd, "char_to_num"); 
 			$$.nd = mknode($2.nd, temp, "declaration"); 
 		} 
 		else if(t == 4) { 
-			struct node *temp = mknode(NULL, $4.nd, "inttochar"); 
+			struct node *temp = mknode(NULL, $4.nd, "num_to_char"); 
 			$$.nd = mknode($2.nd, temp, "declaration"); 
 		} 
 		else if(t == 5) { 
-			struct node *temp = mknode(NULL, $4.nd, "chartofloat"); 
+			struct node *temp = mknode(NULL, $4.nd, "char_to_deci"); 
 			$$.nd = mknode($2.nd, temp, "declaration"); 
 		} 
 		else{
-			struct node *temp = mknode(NULL, $4.nd, "floattochar"); 
+			struct node *temp = mknode(NULL, $4.nd, "deci_to_char"); 
 			$$.nd = mknode($2.nd, temp, "declaration"); 
 		}
 	} 
@@ -143,35 +143,35 @@ statement: datatype ID { add('V'); } init {
 	$1.nd = mknode(NULL, NULL, $1.name); 
 	char *id_type = get_type($1.name); 
 	if(strcmp(id_type, $4.type)) {
-		if(!strcmp(id_type, "int")) {
-			if(!strcmp($4.type, "float")){
-				struct node *temp = mknode(NULL, $4.nd, "floattoint");
+		if(!strcmp(id_type, "num")) {
+			if(!strcmp($4.type, "deci")){
+				struct node *temp = mknode(NULL, $4.nd, "deci_to_num");
 				$$.nd = mknode($1.nd, temp, "="); 
 			}
 			else{
-				struct node *temp = mknode(NULL, $4.nd, "chartoint");
+				struct node *temp = mknode(NULL, $4.nd, "char_to_num");
 				$$.nd = mknode($1.nd, temp, "="); 
 			}
 			
 		}
-		else if(!strcmp(id_type, "float")) {
-			if(!strcmp($4.type, "int")){
-				struct node *temp = mknode(NULL, $4.nd, "inttofloat");
+		else if(!strcmp(id_type, "deci")) {
+			if(!strcmp($4.type, "num")){
+				struct node *temp = mknode(NULL, $4.nd, "num_to_deci");
 				$$.nd = mknode($1.nd, temp, "="); 
 			}
 			else{
-				struct node *temp = mknode(NULL, $4.nd, "chartofloat");
+				struct node *temp = mknode(NULL, $4.nd, "char_to_deci");
 				$$.nd = mknode($1.nd, temp, "="); 
 			}
 			
 		}
 		else{
-			if(!strcmp($4.type, "int")){
-				struct node *temp = mknode(NULL, $4.nd, "inttochar");
+			if(!strcmp($4.type, "num")){
+				struct node *temp = mknode(NULL, $4.nd, "num_to_char");
 				$$.nd = mknode($1.nd, temp, "="); 
 			}
 			else{
-				struct node *temp = mknode(NULL, $4.nd, "floattochar");
+				struct node *temp = mknode(NULL, $4.nd, "deci_to_char");
 				$$.nd = mknode($1.nd, temp, "="); 
 			}
 		}
@@ -204,33 +204,33 @@ expression: expression arithmetic expression {
 		$$.nd = mknode($1.nd, $3.nd, $2.name); 
 	}
 	else {
-		if(!strcmp($1.type, "int") && !strcmp($3.type, "float")) {
-			struct node *temp = mknode(NULL, $1.nd, "inttofloat");
+		if(!strcmp($1.type, "num") && !strcmp($3.type, "deci")) {
+			struct node *temp = mknode(NULL, $1.nd, "num_to_deci");
 			sprintf($$.type, $3.type);
 			$$.nd = mknode(temp, $3.nd, $2.name);
 		}
-		else if(!strcmp($1.type, "float") && !strcmp($3.type, "int")) {
-			struct node *temp = mknode(NULL, $3.nd, "inttofloat");
+		else if(!strcmp($1.type, "deci") && !strcmp($3.type, "num")) {
+			struct node *temp = mknode(NULL, $3.nd, "num_to_deci");
 			sprintf($$.type, $1.type);
 			$$.nd = mknode($1.nd, temp, $2.name);
 		}
-		else if(!strcmp($1.type, "int") && !strcmp($3.type, "char")) {
-			struct node *temp = mknode(NULL, $3.nd, "chartoint");
+		else if(!strcmp($1.type, "num") && !strcmp($3.type, "char")) {
+			struct node *temp = mknode(NULL, $3.nd, "char_to_num");
 			sprintf($$.type, $1.type);
 			$$.nd = mknode($1.nd, temp, $2.name);
 		}
-		else if(!strcmp($1.type, "char") && !strcmp($3.type, "int")) {
-			struct node *temp = mknode(NULL, $1.nd, "chartoint");
+		else if(!strcmp($1.type, "char") && !strcmp($3.type, "num")) {
+			struct node *temp = mknode(NULL, $1.nd, "char_to_num");
 			sprintf($$.type, $3.type);
 			$$.nd = mknode(temp, $3.nd, $2.name);
 		}
-		else if(!strcmp($1.type, "float") && !strcmp($3.type, "char")) {
-			struct node *temp = mknode(NULL, $3.nd, "chartofloat");
+		else if(!strcmp($1.type, "deci") && !strcmp($3.type, "char")) {
+			struct node *temp = mknode(NULL, $3.nd, "char_to_deci");
 			sprintf($$.type, $1.type);
 			$$.nd = mknode($1.nd, temp, $2.name);
 		}
 		else {
-			struct node *temp = mknode(NULL, $1.nd, "chartofloat");
+			struct node *temp = mknode(NULL, $1.nd, "char_to_deci");
 			sprintf($$.type, $3.type);
 			$$.nd = mknode(temp, $3.nd, $2.name);
 		}
@@ -253,13 +253,13 @@ relop: LT
 | NE
 ;
 
-value: NUMBER { strcpy($$.name, $1.name); sprintf($$.type, "int"); add('C'); $$.nd = mknode(NULL, NULL, $1.name); }
-| FLOAT_NUM { strcpy($$.name, $1.name); sprintf($$.type, "float"); add('C'); $$.nd = mknode(NULL, NULL, $1.name); }
+value: NUMBER { strcpy($$.name, $1.name); sprintf($$.type, "num"); add('C'); $$.nd = mknode(NULL, NULL, $1.name); }
+| FLOAT_NUM { strcpy($$.name, $1.name); sprintf($$.type, "deci"); add('C'); $$.nd = mknode(NULL, NULL, $1.name); }
 | CHARACTER { strcpy($$.name, $1.name); sprintf($$.type, "char"); add('C'); $$.nd = mknode(NULL, NULL, $1.name); }
 | ID { strcpy($$.name, $1.name); char *id_type = get_type($1.name); sprintf($$.type, id_type); check_declaration($1.name); $$.nd = mknode(NULL, NULL, $1.name); }
 ;
 
-return: RETURN { add('K'); } value ';' { check_return_type($3.name); $1.nd = mknode(NULL, NULL, "return"); $$.nd = mknode($1.nd, $3.nd, "RETURN"); }
+return: RETURN { add('K'); } value ';' { check_return_type($3.name); $1.nd = mknode(NULL, NULL, "handover"); $$.nd = mknode($1.nd, $3.nd, "RETURN"); }
 | { $$.nd = NULL; }
 ;
 
@@ -315,9 +315,9 @@ void check_declaration(char *c) {
 }
 
 void check_return_type(char *value) {
-	char *main_datatype = get_type("main");
+	char *main_datatype = get_type("vsa");
 	char *return_datatype = get_type(value);
-	if((!strcmp(main_datatype, "int") && !strcmp(return_datatype, "CONST")) || !strcmp(main_datatype, return_datatype)){
+	if((!strcmp(main_datatype, "num") && !strcmp(return_datatype, "CONST")) || !strcmp(main_datatype, return_datatype)){
 		return ;
 	}
 	else {
@@ -334,17 +334,17 @@ int check_types(char *type1, char *type2){
 	if(!strcmp(type1, type2))
 		return 0;
 	// both datatypes are different
-	if(!strcmp(type1, "int") && !strcmp(type2, "float"))
+	if(!strcmp(type1, "num") && !strcmp(type2, "deci"))
 		return 1;
-	if(!strcmp(type1, "float") && !strcmp(type2, "int"))
+	if(!strcmp(type1, "deci") && !strcmp(type2, "num"))
 		return 2;
-	if(!strcmp(type1, "int") && !strcmp(type2, "char"))
+	if(!strcmp(type1, "num") && !strcmp(type2, "char"))
 		return 3;
-	if(!strcmp(type1, "char") && !strcmp(type2, "int"))
+	if(!strcmp(type1, "char") && !strcmp(type2, "num"))
 		return 4;
-	if(!strcmp(type1, "float") && !strcmp(type2, "char"))
+	if(!strcmp(type1, "deci") && !strcmp(type2, "char"))
 		return 5;
-	if(!strcmp(type1, "char") && !strcmp(type2, "float"))
+	if(!strcmp(type1, "char") && !strcmp(type2, "deci"))
 		return 6;
 }
 
